@@ -8,7 +8,7 @@ class TrainOptions():
         self.initialized = False
 
     def initialize(self):
-        self.parser.add_argument('--exp_name', type=str, default="Exp0-r18", help='the name of the experiment')
+        self.parser.add_argument('--exp_name', type=str, default="Exp1", help='the name of the experiment')
         self.parser.add_argument('--epoch_start', type=int, default=0 , help='epoch to start training from')
         self.parser.add_argument('--epoch_num', type=int, default=150, help='number of epochs of training')
         self.parser.add_argument('--factor', type=int, default=1, help='not implemented yet')
@@ -17,7 +17,7 @@ class TrainOptions():
         self.parser.add_argument('--activation', type=str, default='gelu', help='activation type for transformer')
         self.parser.add_argument('--unalign_test', action='store_true', default=False, help='whether to valid with unaligned data: \
         in this mode, test images are random ratate +-10degree, and randomcrop from 256x256 to 224x224')
-        self.parser.add_argument('--data_root', type=str, default='./datasets/', help='dir of the dataset')
+        self.parser.add_argument('--data_root', type=str, default='/media/NAS/DATASET/MVtecAD/ORIGINAL/', help='dir of the dataset')
         self.parser.add_argument('--dataset_name', type=str, default="grid", help='category name of the dataset')
         self.parser.add_argument('--batch_size', type=int, default=2, help='size of the batches')
         self.parser.add_argument('--lr', type=float, default=1e-4, help='adam: learning rate')
@@ -25,9 +25,11 @@ class TrainOptions():
         self.parser.add_argument('--b2', type=float, default=0.999, help='adam: decay of second order momentum of gradient')
         self.parser.add_argument('--n_cpu', type=int, default=8, help='number of cpu threads to use during batch generation')
         
+        self.parser.add_argument('--media_dir', type=str, default='/media/NAS/USERS/moonbo/UTRAD/', help='the main folder that saves following image and ckpt')
         self.parser.add_argument('--image_result_dir', type=str, default='result_images', help=' where to save the result images')
         self.parser.add_argument('--model_result_dir', type=str, default='saved_models', help=' where to save the checkpoints')
         self.parser.add_argument('--validation_image_dir', type=str, default='validation_images', help=' where to save the validation image')
+        
         
 
 
@@ -36,8 +38,12 @@ class TrainOptions():
             self.initialize()
         args = self.parser.parse_args()
 
-        os.makedirs('%s-%s/%s' % (args.exp_name, args.dataset_name, args.image_result_dir), exist_ok=True)
-        os.makedirs('%s-%s/%s' % (args.exp_name, args.dataset_name, args.model_result_dir), exist_ok=True)
+        media_dir = '/media/NAS/USERS/moonbo/UTRAD/'
+        os.makedirs(os.path.join(media_dir, '%s-%s/%s' % (args.exp_name, args.dataset_name, args.image_result_dir)), exist_ok=True)
+        os.makedirs(os.path.join(media_dir, '%s-%s/%s' % (args.exp_name, args.dataset_name, args.model_result_dir)), exist_ok=True)
+
+        # os.makedirs('%s-%s/%s' % (args.exp_name, args.dataset_name, args.image_result_dir), exist_ok=True)
+        # os.makedirs('%s-%s/%s' % (args.exp_name, args.dataset_name, args.model_result_dir), exist_ok=True)
 
         self.args = args
         return self.args

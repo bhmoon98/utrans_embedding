@@ -1,9 +1,15 @@
 # UTRAD
-UTRAD for nueral networks
+(Non official, modified installation)
+UTRAD for neural networks
 ## Installation
-This repo was tested with Ubuntu 16.04/18.04, Pytorch 1.5.0
+```
+conda create -n utrad python=3.7
+conda install pytorch==1.12.1 torchvision==0.13.1 torchaudio==0.12.1 cudatoolkit=11.3 -c pytorch
+pip install -r requirements.txt
+```
+
 ## Running 
-1. Fetch the Mvtec datasets, and extract to datasets/
+1. Fetch the Mvtec datasets, check option media_dir and data_root, should modify in your local env.
 2. Run training by using command:
 ```
 python main.py --dataset_name grid

@@ -22,7 +22,12 @@ from skimage.measure import label
 
 def main():
     args = TrainOptions().parse()
-    with open("./%s-%s/args.log" % (args.exp_name,  args.dataset_name) ,"a") as args_log:
+    media_dir = args.media_dir
+    log_dir = os.path.join(media_dir, "%s-%s/log" % (args.exp_name,  args.dataset_name))
+    os.makedirs(log_dir, exist_ok=True)
+    log_file = "log"
+    log_path = os.path.join(log_dir, log_file)
+    with open(log_path ,"a") as args_log:
         for k, v in sorted(vars(args).items()):
             print('%s: %s ' % (str(k), str(v)))
             args_log.write('%s: %s \n' % (str(k), str(v)))
@@ -32,18 +37,21 @@ def main():
     torch.cuda.manual_seed(args.seed)
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-    save_dir = '%s-%s/%s/%s' % (args.exp_name, args.dataset_name, args.model_result_dir, 'checkpoint.pth')
+    save_dir = os.path.join(media_dir, '%s-%s/%s/' % (args.exp_name, args.dataset_name, args.model_result_dir))
+    os.makedirs(save_dir, exist_ok=True)
+    save_file = os.path.join(save_dir, 'checkpoint.pth')
+    # save_file = '%s-%s/%s/%s' % (args.exp_name, args.dataset_name, args.model_result_dir, 'checkpoint.pth')
     start_epoch = 0
     transformer = Create_nets(args)
     transformer = transformer.to(device)
     transformer.cuda()
-    optimizer = torch.optim.Adam( transformer.parameters(), lr=args.lr, betas=(args.b1, args.b2))
+    optimizer = torch.optim.Adam(transformer.parameters(), lr=args.lr, betas=(args.b1, args.b2))
     best_loss = 1e10
 
     backbone = models.resnet18(pretrained=True).to(device)
 
-    if os.path.exists(save_dir):
-        checkpoint = torch.load(save_dir)
+    if os.path.exists(save_file):
+        checkpoint = torch.load(save_file)
         transformer.load_state_dict(checkpoint['transformer'])
         start_epoch = checkpoint['start_epoch']
         #optimizer.load_state_dict(checkpoint['optimizer'])
@@ -130,7 +138,7 @@ def main():
                         'args':args,
                         'best_loss':best_loss
                 }
-            torch.save(state_dict, save_dir)
+            torch.save(state_dict, save_file)
 
         print("start evaluation on test set!")
         transformer.eval()
@@ -194,7 +202,7 @@ def main():
         per_pixel_rocauc = roc_auc_score(gt_mask.flatten(), scores.flatten()) 
         print('pixel ROCAUC: %.3f' % (per_pixel_rocauc))
         
-        with open("./%s-%s/args.log" % (args.exp_name,  args.dataset_name) ,"a") as train_log:
+        with open(log_path ,"a") as train_log:
             train_log.write("\r[Epoch%d]-[Loss:%f]-[Loss_scale:%f]-[image_AUC:%f]-[pixel_AUC:%f]" %
                                                         (epoch+1, avg_loss / total, avg_loss_scale / total, img_roc_auc, per_pixel_rocauc))
 

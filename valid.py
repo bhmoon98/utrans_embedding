@@ -28,7 +28,11 @@ def main():
     args = TrainOptions().parse()
     torch.manual_seed(args.seed)
 
-    save_dir = '%s-%s/%s/%s' % (args.exp_name, args.dataset_name, args.model_result_dir, 'checkpoint.pth')
+    media_dir = args.media_dir
+    save_dir = os.path.join(media_dir, '%s-%s/%s/' % (args.exp_name, args.dataset_name, args.model_result_dir))
+    os.makedirs(save_dir, exist_ok=True)
+    save_file = os.path.join(save_dir, 'checkpoint.pth')
+
     start_epoch = 0
     transformer = Create_nets(args)
     transformer = transformer.to(device)
@@ -43,8 +47,8 @@ def main():
 
     backbone = models.resnet18(pretrained=True).to(device)
 
-    if os.path.exists(save_dir):
-        checkpoint = torch.load(save_dir)
+    if os.path.exists(save_file):
+        checkpoint = torch.load(save_file)
         transformer.load_state_dict(checkpoint['transformer'])
         start_epoch = checkpoint['start_epoch']
 
@@ -75,8 +79,8 @@ def main():
 
         return z
 
-
-    img_save_dir='%s-%s/%s' % (args.exp_name, args.dataset_name, args.validation_image_dir)
+    
+    img_save_dir=os.path.join(media_dir, '%s-%s/%s' % (args.exp_name, args.dataset_name, args.validation_image_dir))
     if not os.path.exists(img_save_dir):
         os.mkdir(img_save_dir)
     score_map = []
@@ -123,14 +127,14 @@ def main():
                 score_map.append(score.cpu())
                 gt_mask_list.append(ground_truth.cpu())
                 gt_list.append(gt)
-
-                save_image(inputs, '%s-%s/%s/%s' % (args.exp_name, args.dataset_name, 'validation_images',str(i)+'test1_inputs.png'),nrow= num)
-                save_image(heatmap, '%s-%s/%s/%s' % (args.exp_name, args.dataset_name, 'validation_images',str(i)+'test3_heatmap.png'),range=norm_range[4],normalize=True,nrow= num)
-                save_image(ground_truth, '%s-%s/%s/%s' % (args.exp_name, args.dataset_name, 'validation_images',str(i)+'test2_truth.png'),normalize=True,nrow= num)
-                cv2.waitKey(100)
-                heatmap2 = cv2.imread('%s-%s/%s/%s' % (args.exp_name, args.dataset_name, 'validation_images',str(i)+'test3_heatmap.png'),cv2.IMREAD_GRAYSCALE)
+                
+                save_image(inputs, os.path.join(media_dir, '%s-%s/%s/%s' % (args.exp_name, args.dataset_name, 'validation_images',str(i)+'test1_inputs.png')),nrow= num)
+                save_image(heatmap, os.path.join(media_dir, '%s-%s/%s/%s' % (args.exp_name, args.dataset_name, 'validation_images',str(i)+'test3_heatmap.png')),range=norm_range[4],normalize=True,nrow= num)
+                save_image(ground_truth, os.path.join(media_dir, '%s-%s/%s/%s' % (args.exp_name, args.dataset_name, 'validation_images',str(i)+'test2_truth.png')),normalize=True,nrow= num)
+                # cv2.waitKey(100)
+                heatmap2 = cv2.imread(os.path.join(media_dir, '%s-%s/%s/%s' % (args.exp_name, args.dataset_name, 'validation_images',str(i)+'test3_heatmap.png')),cv2.IMREAD_GRAYSCALE)
                 heatmap2 = cv2.applyColorMap(heatmap2, cv2.COLORMAP_JET)
-                cv2.imwrite('%s-%s/%s/%s' % (args.exp_name, args.dataset_name, 'validation_images',str(i)+'test5_heatmap_color.png'),heatmap2)
+                cv2.imwrite(os.path.join(media_dir, '%s-%s/%s/%s' % (args.exp_name, args.dataset_name, 'validation_images',str(i)+'test5_heatmap_color.png')),heatmap2)
                 '''
                 num = 4
                 mean = torch.Tensor([0.485, 0.456, 0.406]).unsqueeze(-1).unsqueeze(-1).unsqueeze(0)
@@ -180,16 +184,16 @@ def main():
             fpr, tpr, thresholds = roc_curve(gt_mask.flatten(), scores.flatten()) 
             per_pixel_rocauc = roc_auc_score(gt_mask.flatten(), scores.flatten()) 
             print('pixel ROCAUC: %.3f' % (per_pixel_rocauc))
-            
+            validation_log_path = os.path.join(media_dir, ("./%s-%s/validation_result.log" % (args.exp_name,  args.dataset_name)))
 
             if args.unalign_test:
-                with open("./%s-%s/validation_result.log" % (args.exp_name,  args.dataset_name) ,"a") as log:
+                with open(validation_log_path,"a") as log:
                     log.write('epochs:%ss\n' % (str(start_epoch)))
                     log.write('class_name:%s\n' % (args.dataset_name))
                     log.write('unalign image ROCAUC: %.3f\n' % (img_roc_auc))
                     log.write('unalign pixel ROCAUC: %.3f\n\n' % (per_pixel_rocauc))
             else:
-                with open("./%s-%s/validation_result.log" % (args.exp_name,  args.dataset_name) ,"w") as log:
+                with open(validation_log_path ,"w") as log:
                     log.write('epochs:%ss\n' % (str(start_epoch)))
                     log.write('class_name:%s\n' % (args.dataset_name))
                     log.write('image ROCAUC: %.3f\n' % (img_roc_auc))
