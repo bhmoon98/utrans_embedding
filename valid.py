@@ -131,6 +131,7 @@ def main():
                 save_image(inputs, os.path.join(media_dir, '%s-%s/%s/%s' % (args.exp_name, args.dataset_name, 'validation_images',str(i)+'test1_inputs.png')),nrow= num)
                 save_image(heatmap, os.path.join(media_dir, '%s-%s/%s/%s' % (args.exp_name, args.dataset_name, 'validation_images',str(i)+'test3_heatmap.png')),range=norm_range[4],normalize=True,nrow= num)
                 save_image(ground_truth, os.path.join(media_dir, '%s-%s/%s/%s' % (args.exp_name, args.dataset_name, 'validation_images',str(i)+'test2_truth.png')),normalize=True,nrow= num)
+
                 # cv2.waitKey(100)
                 heatmap2 = cv2.imread(os.path.join(media_dir, '%s-%s/%s/%s' % (args.exp_name, args.dataset_name, 'validation_images',str(i)+'test3_heatmap.png')),cv2.IMREAD_GRAYSCALE)
                 heatmap2 = cv2.applyColorMap(heatmap2, cv2.COLORMAP_JET)
