@@ -11,6 +11,9 @@ import copy
 import math
 import numpy as np
 from typing import List
+from matrix import extract_vec
+
+FILE = 'test.emb'
 
 class Args:
     def __init__(self):
@@ -168,10 +171,21 @@ def Create_nets(args):
 
 # Initialize the model
 transformer = Create_nets(args)
-
+matrix, _ = extract_vec(FILE)
+print(matrix.shape)
 # Create example input tensor
-example_input = torch.randn(8, 64, 100, 20)  # (B, C, H, W)
+# example_input = torch.randn(8, 64, 100, 20)  # (B, C, H, W)
 
+# Convert the matrix to a tensor and float type
+matrix_tensor = torch.tensor(matrix).float()
+
+# Reshape the matrix to (64, 100, 20)
+reshaped_matrix = matrix_tensor.view(64, 100, 20)
+
+# Replicate the reshaped matrix 8 times to form (8, 64, 100, 20)
+example_input = reshaped_matrix.unsqueeze(0).repeat(8, 1, 1, 1)
+
+print(example_input.shape)  # should print torch.Size([8, 64, 100, 20])
 # Pass the input tensor through the model
 output1= transformer(example_input)
 

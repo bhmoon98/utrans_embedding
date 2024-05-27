@@ -11,6 +11,9 @@ import copy
 import math
 import numpy as np
 from typing import List
+from matrix import extract_vec
+
+FILE = 'test.emb'
 
 class Args:
     def __init__(self):
@@ -186,11 +189,32 @@ def Create_nets(args):
 
 # Initialize the model
 transformer = Create_nets(args)
-
+matrix, _ = extract_vec(FILE)
 # Create example input tensor
-example_input = torch.randn(8, 64, 100, 20)  # (B, C, H, W)
-example_input2 = torch.randn(8, 64, 50, 10)
-example_input3 = torch.randn(8, 64, 25, 5)
+# example_input = torch.randn(8, 64, 100, 20)  # (B, C, H, W)
+# example_input2 = torch.randn(8, 64, 50, 10)
+# example_input3 = torch.randn(8, 64, 25, 5)
+
+
+# Convert the matrix to a tensor and float type
+matrix_tensor = torch.tensor(matrix).float()
+# Reshape the matrix to (64, 100, 20)
+reshaped_matrix = matrix_tensor.view(64, 100, 20)
+# Replicate the reshaped matrix 8 times to form (8, 64, 100, 20)
+example_input = reshaped_matrix.unsqueeze(0).repeat(8, 1, 1, 1)
+# Generate random indices for rows and columns for example_input2
+row_indices_2 = torch.randperm(100)[:50]
+col_indices_2 = torch.randperm(20)[:10]
+
+# Select the random rows and columns for example_input2
+example_input2 = example_input[:, :, row_indices_2, :][:, :, :, col_indices_2]
+
+# Generate random indices for rows and columns for example_input3
+row_indices_3 = torch.randperm(50)[:25]
+col_indices_3 = torch.randperm(10)[:5]
+
+# Select the random rows and columns for example_input3 from example_input2
+example_input3 = example_input2[:, :, row_indices_3, :][:, :, :, col_indices_3]
 
 # Pass the input tensor through the model
 output1= transformer(example_input, example_input2, example_input3)
