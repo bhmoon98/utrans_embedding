@@ -128,18 +128,36 @@ class MultiLevelTransformer(nn.Module):
 
         return latent_patch, latent_pixel
     
-    def forward(self, x):
-        print("Initial shape:", x.size())
-        x = self.pre_conv(x)
-        B, C, H, W = x.size()  # (B, C, H, W) = (8, 512, 100, 20)
-        print("After pre_conv:", x.size())
-        x = self.global_position_embedding(x)
-        print("After global_position_embedding:", x.size())
-        x = x.permute(0, 2, 3, 1).contiguous().view(B * H * W, C).unsqueeze(0)
-        print("After permute, view, unsqueeze:", x.size())
+    def forward(self, x1, x2, x3):
+        print("Initial shape:", x1.size())
+        x1 = self.pre_conv(x1)
+        x2 = self.pre_conv(x2)
+        x3 = self.pre_conv(x3)
+
+        B, C, H1, W1= x1.size()  # (B, C, H, W) = (8, 512, 100, 20)
+        B, C, H2, W2 = x2.size() # (8, 512, 50, 10)
+        B, C, H3, W3 = x3.size() # (8, 512, 25, 5)
+        print("After pre_conv:", x1.size())
+        print("After pre_conv:", x2.size())
+        print("After pre_conv:", x3.size())
+
+        
+        x1 = self.global_position_embedding(x1)
+        print("After global_position_embedding:", x1.size())
+        x1 = x1.permute(0, 2, 3, 1).contiguous().view(B * H1 * W1, C).unsqueeze(0)
+        x2 = x2.permute(0, 2, 3, 1).contiguous().view(B * H2 * W2, C).unsqueeze(0)
+        x3 = x3.permute(0, 2, 3, 1).contiguous().view(B * H3 * W3, C).unsqueeze(0)
+        print("After permute, view, unsqueeze:", x1.size())
+        print("After permute, view, unsqueeze:", x2.size())
+        print("After permute, view, unsqueeze:", x3.size())
         latent_list = []
         for i in range(len(self.encoder)):
-            x, l = self.forwardDOWN(x=x, encoder_block=self.encoder[i], position_embedding=self.position_embedding[i], level=i)
+            if i == 0:
+                x, l = self.forwardDOWN(x=x1, encoder_block=self.encoder[i], position_embedding=self.position_embedding[i], level=i)
+            elif i == 1:
+                x, l = self.forwardDOWN(x=x2+x, encoder_block=self.encoder[i], position_embedding=self.position_embedding[i], level=i)
+            elif i == 2:
+                x, l = self.forwardDOWN(x=x3+x, encoder_block=self.encoder[i], position_embedding=self.position_embedding[i], level=i)
             print(f"After forwardDOWN {i}: x size: {x.size()}, l size: {l.size()}")
             latent_list.append(self.bottle_neck[i](l))
         
@@ -147,7 +165,7 @@ class MultiLevelTransformer(nn.Module):
         l_concat = torch.cat(latent_list, dim=1)  # Shape: [4, 250, 1536] concatenated along the feature dimension
 
         # Reshape l_concat to [B, H, W, -1] for MLP processing
-        l_concat = l_concat.permute(1, 0, 2).contiguous().view(B * H * W, -1)
+        l_concat = l_concat.permute(1, 0, 2).contiguous().view(B * H1 * W1, -1)
         print("After concatenation:", l_concat.size())
 
         # Apply the MLP
@@ -155,7 +173,7 @@ class MultiLevelTransformer(nn.Module):
         print("After MLP:", l_mlp.size())
 
         # Reshape back to [B, H, W, 20] and then permute to [B, 20, H, W]
-        l_mlp = l_mlp.view(B, H, W, self.final_layer_dim).permute(0, 3, 1, 2).contiguous()
+        l_mlp = l_mlp.view(B, H1, W1, self.final_layer_dim).permute(0, 3, 1, 2).contiguous()
         print("After final reshape:", l_mlp.size())
 
         return self.final_layer(l_mlp)
@@ -171,9 +189,11 @@ transformer = Create_nets(args)
 
 # Create example input tensor
 example_input = torch.randn(8, 64, 100, 20)  # (B, C, H, W)
+example_input2 = torch.randn(8, 64, 50, 10)
+example_input3 = torch.randn(8, 64, 25, 5)
 
 # Pass the input tensor through the model
-output1= transformer(example_input)
+output1= transformer(example_input, example_input2, example_input3)
 
 # Print the shapes of the outputs
 print("Output1 shape:", output1.shape)
