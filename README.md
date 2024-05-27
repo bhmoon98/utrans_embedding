@@ -1,26 +1,21 @@
-# UTRAD
-(Non official, modified installation)
-UTRAD for neural networks
+# UTRANS_Embedding
+UTrans-Embedding used for JSSP instance
+code is implemented using UTRAD
+
 ## Installation
 ```
-conda create -n utrad python=3.7
+conda create -n utrans python=3.7
 conda install pytorch==1.12.1 torchvision==0.13.1 torchaudio==0.12.1 cudatoolkit=11.3 -c pytorch
 pip install -r requirements.txt
 ```
 
 ## Running 
-1. Fetch the Mvtec datasets, check option media_dir and data_root, should modify in your local env.
-2. Run training by using command:
+For Using Only Instance Vector(100*20) implement
 ```
-python main.py --dataset_name grid
+python models.py
 ```
-where --dataset_name is used to specify the catogory.
 
-3. Validate with command:
+For Using Instance Vector + Sparse Embedding implement
 ```
-python valid.py --dataset_name grid
-```
-4. Validate with unaligned setting:
-```
-python valid.py --dataset_name grid --unaligned_test
+python models_se.py
 ```
